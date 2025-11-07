@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../utils/auth_context';
 
-export default function DashboardPage() {
+export default function DashboardPage({ onNavigateToBlog }) {
   const { user, logout } = useAuth();
 
   const handleLogout = async () => {
@@ -99,6 +99,16 @@ export default function DashboardPage() {
         <Text style={styles.messageText}>
           🎓 SUPER30 STUDENTS ARE SUPERHUMANS! 🎓
         </Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Blog & Content</Text>
+        <Text style={styles.cardDescription}>
+          Share your knowledge and experiences with the SUPER30 community
+        </Text>
+        <TouchableOpacity style={styles.blogButton} onPress={onNavigateToBlog}>
+          <Text style={styles.blogButtonText}>📝 Manage Blog Posts</Text>
+        </TouchableOpacity>
       </View>
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -207,6 +217,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoutButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cardDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 15,
+    lineHeight: 20,
+  },
+  blogButton: {
+    backgroundColor: '#007AFF',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  blogButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
