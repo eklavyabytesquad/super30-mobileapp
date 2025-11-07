@@ -13,12 +13,15 @@ import {
 import { useAuth } from '../utils/auth_context';
 import { supabase } from '../utils/supabase';
 import { blogUtils } from '../utils/blog_utils';
+import { API_CONFIG, apiCall } from '../utils/api_config';
 
 export default function BlogListPage({ onNavigateToCreateEdit, onNavigateBack }) {
   const { user } = useAuth();
   const [blogPosts, setBlogPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [summarizing, setSummarizing] = useState({});
+  const [summaries, setSummaries] = useState({});
 
   useEffect(() => {
     fetchBlogPosts();
@@ -79,6 +82,53 @@ export default function BlogListPage({ onNavigateToCreateEdit, onNavigateBack })
     );
   };
 
+  const handleSummarizeText = async (postId, text) => {
+    setSummarizing(prev => ({ ...prev, [postId]: true }));
+    
+    console.log('🚀 Starting summarization for post:', postId);
+    console.log('📝 Text to summarize:', text.substring(0, 100) + '...');
+    console.log('🌐 API URL:', `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PROCESS_TEXT}`);
+    
+    const result = await apiCall(API_CONFIG.ENDPOINTS.PROCESS_TEXT, {
+      text: text,
+      sentences_count: 2
+    });
+    
+    if (result.success) {
+      console.log('✅ API Response:', result.data);
+      
+      if (result.data.success && result.data.data && result.data.data.summary) {
+        setSummaries(prev => ({ 
+          ...prev, 
+          [postId]: result.data.data.summary 
+        }));
+        console.log('✨ Summary saved successfully!');
+      } else {
+        console.error('❌ Invalid response format:', result.data);
+        Alert.alert('Error', 'Failed to generate summary - Invalid response format');
+      }
+    } else {
+      console.error('❌ API Error:', result.error);
+      Alert.alert(
+        'Connection Error', 
+        `Failed to connect to summarization service.\n\n${result.error}\n\nTroubleshooting:\n• Ensure API server is running on ${API_CONFIG.BASE_URL}\n• Check if your phone and computer are on the same Wi-Fi network\n• Try restarting the API server`
+      );
+    }
+    
+    setSummarizing(prev => ({ ...prev, [postId]: false }));
+  };
+
+  const toggleSummary = (postId) => {
+    if (summaries[postId]) {
+      // Remove summary if it exists
+      setSummaries(prev => {
+        const newSummaries = { ...prev };
+        delete newSummaries[postId];
+        return newSummaries;
+      });
+    }
+  };
+
 
 
   const renderBlogPost = (post) => (
@@ -98,9 +148,40 @@ export default function BlogListPage({ onNavigateToCreateEdit, onNavigateBack })
           <Text style={styles.postSubTitle}>{post.sub_title}</Text>
         )}
         
-        <Text style={styles.postDescription} numberOfLines={3}>
+        <Text style={styles.postDescription} numberOfLines={summaries[post.id] ? null : 3}>
           {post.description}
         </Text>
+
+        {/* Summarization Section */}
+        <View style={styles.summarySection}>
+          <TouchableOpacity
+            style={styles.summarizeButton}
+            onPress={() => {
+              if (summaries[post.id]) {
+                toggleSummary(post.id);
+              } else {
+                handleSummarizeText(post.id, post.description);
+              }
+            }}
+            disabled={summarizing[post.id]}
+          >
+            {summarizing[post.id] ? (
+              <ActivityIndicator size="small" color="#007AFF" />
+            ) : (
+              <Text style={styles.summarizeButtonText}>
+                {summaries[post.id] ? '✕ Hide Summary' : '📝 Summarize'}
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        {/* Display Summary */}
+        {summaries[post.id] && (
+          <View style={styles.summaryContainer}>
+            <Text style={styles.summaryLabel}>📋 Summary:</Text>
+            <Text style={styles.summaryText}>{summaries[post.id]}</Text>
+          </View>
+        )}
         
         <View style={styles.postMeta}>
           <Text style={styles.postDate}>{blogUtils.formatDate(post.created_at)}</Text>
@@ -375,5 +456,45 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  summarySection: {
+    marginBottom: 10,
+  },
+  summarizeButton: {
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    minHeight: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  summarizeButtonText: {
+    color: '#007AFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  summaryContainer: {
+    backgroundColor: '#e8f4f8',
+    borderLeftWidth: 4,
+    borderLeftColor: '#007AFF',
+    padding: 12,
+    borderRadius: 6,
+    marginBottom: 10,
+  },
+  summaryLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#007AFF',
+    marginBottom: 6,
+  },
+  summaryText: {
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 20,
+    fontStyle: 'italic',
   },
 });
