@@ -1,17 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { AuthProvider, useAuth } from './utils/auth_context';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 
-const Stack = createNativeStackNavigator();
-
 function AppNavigator() {
   const { isAuthenticated, loading } = useAuth();
+  const [currentScreen, setCurrentScreen] = useState('Login');
 
   if (loading) {
     return (
@@ -21,38 +18,32 @@ function AppNavigator() {
     );
   }
 
+  // Show Dashboard if authenticated
+  if (isAuthenticated) {
+    return (
+      <View style={styles.container}>
+        <DashboardPage />
+        <StatusBar style="auto" />
+      </View>
+    );
+  }
+
+  // Show Login or Register based on currentScreen state
+  if (currentScreen === 'Register') {
+    return (
+      <View style={styles.container}>
+        <RegisterPage onNavigateToLogin={() => setCurrentScreen('Login')} />
+        <StatusBar style="auto" />
+      </View>
+    );
+  }
+
+  // Default: Show Login
   return (
-    <NavigationContainer>
-      <Stack.Navigator>
-        {!isAuthenticated ? (
-          <>
-            <Stack.Screen
-              name="Login"
-              component={LoginPage}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="Register"
-              component={RegisterPage}
-              options={{
-                title: 'Create Account',
-                headerBackTitle: 'Back',
-              }}
-            />
-          </>
-        ) : (
-          <Stack.Screen
-            name="Dashboard"
-            component={DashboardPage}
-            options={{
-              title: 'Dashboard',
-              headerShown: false,
-            }}
-          />
-        )}
-      </Stack.Navigator>
+    <View style={styles.container}>
+      <LoginPage onNavigateToRegister={() => setCurrentScreen('Register')} />
       <StatusBar style="auto" />
-    </NavigationContainer>
+    </View>
   );
 }
 
@@ -65,6 +56,9 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   loadingContainer: {
     flex: 1,
     backgroundColor: '#fff',

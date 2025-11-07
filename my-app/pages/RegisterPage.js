@@ -9,12 +9,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  ActivityIndicator,
-  Picker
+  ActivityIndicator
 } from 'react-native';
 import { useAuth } from '../utils/auth_context';
 
-export default function RegisterPage({ navigation }) {
+export default function RegisterPage({ onNavigateToLogin }) {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -57,7 +56,6 @@ export default function RegisterPage({ navigation }) {
         'EDITOR' // Default role
       );
       Alert.alert('Success', 'Account created successfully!');
-      // Navigation will be handled by App.js based on auth state
     } catch (error) {
       Alert.alert('Registration Failed', error.message || 'Could not create account');
     } finally {
@@ -75,6 +73,14 @@ export default function RegisterPage({ navigation }) {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.formContainer}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={onNavigateToLogin}
+            disabled={loading}
+          >
+            <Text style={styles.backButtonText}>← Back to Login</Text>
+          </TouchableOpacity>
+
           <Text style={styles.title}>Join SUPER30!</Text>
           <Text style={styles.subtitle}>Create your account</Text>
 
@@ -106,7 +112,7 @@ export default function RegisterPage({ navigation }) {
             <Text style={styles.label}>Password *</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter your password"
+              placeholder="Enter your password (min 6 characters)"
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -128,20 +134,13 @@ export default function RegisterPage({ navigation }) {
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Gender (Optional)</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={gender}
-                onValueChange={(itemValue) => setGender(itemValue)}
-                enabled={!loading}
-                style={styles.picker}
-              >
-                <Picker.Item label="Select Gender" value="" />
-                <Picker.Item label="Male" value="Male" />
-                <Picker.Item label="Female" value="Female" />
-                <Picker.Item label="Other" value="Other" />
-                <Picker.Item label="Prefer not to say" value="Prefer not to say" />
-              </Picker>
-            </View>
+            <TextInput
+              style={styles.input}
+              placeholder="Male, Female, Other"
+              value={gender}
+              onChangeText={setGender}
+              editable={!loading}
+            />
           </View>
 
           <View style={styles.inputContainer}>
@@ -171,7 +170,7 @@ export default function RegisterPage({ navigation }) {
           <View style={styles.loginContainer}>
             <Text style={styles.loginText}>Already have an account? </Text>
             <TouchableOpacity
-              onPress={() => navigation.navigate('Login')}
+              onPress={onNavigateToLogin}
               disabled={loading}
             >
               <Text style={styles.loginLink}>Login</Text>
@@ -206,6 +205,15 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
+  backButton: {
+    marginBottom: 10,
+    padding: 5,
+  },
+  backButtonText: {
+    color: '#007AFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
@@ -235,15 +243,6 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     backgroundColor: '#f9f9f9',
-  },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    backgroundColor: '#f9f9f9',
-  },
-  picker: {
-    height: 50,
   },
   button: {
     backgroundColor: '#007AFF',

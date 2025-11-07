@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../utils/auth_context';
 
-export default function LoginPage({ navigation }) {
+export default function LoginPage({ onNavigateToRegister }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,7 +29,6 @@ export default function LoginPage({ navigation }) {
     try {
       await login(email, password);
       Alert.alert('Success', 'Logged in successfully!');
-      // Navigation will be handled by App.js based on auth state
     } catch (error) {
       Alert.alert('Login Failed', error.message || 'Invalid email or password');
     } finally {
@@ -90,7 +89,7 @@ export default function LoginPage({ navigation }) {
           <View style={styles.registerContainer}>
             <Text style={styles.registerText}>Don't have an account? </Text>
             <TouchableOpacity
-              onPress={() => navigation.navigate('Register')}
+              onPress={onNavigateToRegister}
               disabled={loading}
             >
               <Text style={styles.registerLink}>Register</Text>
